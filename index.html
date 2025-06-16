@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 脚本工作台(跑路分区)</title>
+    <title>AI 脚本工作台 (跑路分区)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -134,10 +134,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <!-- Scripts -->
+    <!-- 重要：修正了脚本加载顺序 -->
     <script src="config.js"></script>
     <script src="prompts.js"></script>
-    <script src="backend.js"></script> 
     <script src="app.js"></script>
+    <script src="backend.js"></script>
 </body>
 </html>
+
 
