@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 脚本工作台(跑路分区)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link id="light-theme-style" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="not all">
+    <link id="dark-theme-style" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="transition-colors duration-500">
+
+    <!-- 登录/注册弹窗 -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm">
+        <div id="auth-container" class="w-full max-w-md bg-[var(--container-bg)] rounded-2xl shadow-2xl p-8 transform transition-all">
+            <h2 id="auth-title" class="text-3xl font-bold text-center text-[var(--primary-text)] mb-2">欢迎回来</h2>
+            <p id="auth-subtitle" class="text-center text-[var(--secondary-text)] mb-8">登录以继续</p>
+            
+            <div class="space-y-5">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-[var(--secondary-text)] mb-1">电子邮箱</label>
+                    <input type="email" id="email" class="auth-input" placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-[var(--secondary-text)] mb-1">密码</label>
+                    <input type="password" id="password" class="auth-input" placeholder="••••••••" autocomplete="current-password">
+                </div>
+            </div>
+            
+            <div id="auth-error" class="text-red-500 text-sm text-center mt-4 h-4"></div>
+
+            <button id="auth-action-btn" class="auth-main-btn mt-4">登录</button>
+
+            <p class="text-center text-sm text-[var(--secondary-text)] mt-6">
+                <span id="auth-switch-text">还没有账户？</span>
+                <a href="#" id="auth-switch-link" class="font-semibold text-[var(--accent-color)] hover:underline">立即注册</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- 主应用界面 (默认隐藏) -->
+    <div id="app-wrapper" class="w-full h-screen flex-col p-2 sm:p-4 hidden">
+        <div class="main-container flex-grow flex flex-col w-full max-w-7xl mx-auto h-full overflow-hidden">
+            <div id="top-bar" class="flex-shrink-0 flex items-center justify-between border-b border-[var(--border-color)] pl-2 pr-3 py-1.5">
+                <div id="tabs-list" class="flex-1 min-w-0 flex items-center overflow-x-auto"></div>
+                <div class="flex items-center space-x-1">
+                    <div id="user-info" class="text-sm text-[var(--secondary-text)] mr-2 hidden items-center gap-2">
+                        <span id="user-email-display"></span>
+                        <button id="logout-btn" class="icon-btn" title="退出登录"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 012 2v2h-2V4H5v16h9v-2h2v2a2 2 0 01-2 2H5a2 2 0 01-2-2V4a2 2 0 012-2h9z"></path></svg></button>
+                    </div>
+                    <button id="add-tab-btn" class="icon-btn" title="新对话"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg></button>
+                    <button id="settings-btn" class="icon-btn" title="设置"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.479 10.092a.5.5 0 00-.518-.518l-1.956-.326a5.038 5.038 0 00-2.828-2.828l-.326-1.956a.5.5 0 00-.518-.518h-2.666a.5.5 0 00-.518.518l-.327 1.956a5.038 5.038 0 00-2.828 2.828l-1.956.326a.5.5 0 00-.518.518v2.666a.5.5 0 00.518.518l1.956.327a5.038 5.038 0 002.828 2.828l.326 1.956a.5.5 0 00.518.518h2.666a.5.5 0 00.518-.518l.327-1.956a5.038 5.038 0 002.828-2.828l1.956-.327a.5.5 0 00.518-.518v-2.666zM12 15a3 3 0 110-6 3 3 0 010 6z"/></svg></button>
+                    <button id="theme-toggle" class="icon-btn" title="切换主题">
+                        <svg id="theme-icon-light" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12h2.25m.386-6.364l1.591 1.591M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9z" /></svg>
+                        <svg id="theme-icon-dark" class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- 主聊天区 -->
+            <div class="flex-grow flex flex-col p-3 md:p-6 overflow-hidden">
+                <div id="chatHistory" class="flex-grow overflow-y-auto mb-4 space-y-8 pr-2"></div>
+                <div id="messageBox" class="message-box-base hidden" role="alert"><span class="font-bold" id="messageType"></span> <span id="messageText"></span></div>
+                <div class="flex-shrink-0 border-t border-[var(--border-color)] pt-4">
+                    <div id="file-attachment-container" class="px-3 pb-3"></div>
+                     <div class="relative">
+                        <textarea id="prompt" rows="3" class="w-full pl-6 pr-44 py-4 resize-none focus:ring-0" placeholder="请输入您想生成的内容..."></textarea>
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+                            <label for="fileUpload" class="icon-btn" title="上传文件"><svg class="w-6 h-6 text-[var(--secondary-text)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg></label>
+                            <input type="file" id="fileUpload" class="hidden" accept=".js,.txt,.md,.json,.html,.css">
+                            <button id="generateBtn" class="main-btn flex items-center justify-center w-32 h-12"><span id="btn-text" class="text-lg">发送</span><div id="loader" class="loader-spinner hidden"></div></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设置弹窗 HTML -->
+    <div id="settings-modal">
+        <div id="settings-overlay" class="absolute inset-0"></div>
+        <div class="settings-panel relative">
+            <h2 class="settings-title">设置中心 ⚙️</h2>
+            <div class="space-y-4">
+                <div class="relative">
+                    <div id="workbench-mode-btn" class="settings-item">
+                        <span class="settings-item-label">脚本模式</span>
+                        <span id="workbench-mode-value" class="settings-item-value">JS 脚本 <i class="fas fa-chevron-right"></i></span>
+                    </div>
+                    <div id="workbench-mode-popup" class="settings-popup w-full">
+                        <label for="mode-js" class="popup-option"><input type="radio" id="mode-js" name="workbench-mode" value="js">JS 脚本模式</label>
+                        <label for="mode-js-plus" class="popup-option"><input type="radio" id="mode-js-plus" name="workbench-mode" value="js-plus">JS Plus 模式 ✨</label>
+                        <label for="mode-jsonui" class="popup-option"><input type="radio" id="mode-jsonui" name="workbench-mode" value="jsonui">JSON UI 模式</label>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div id="ai-model-btn" class="settings-item">
+                        <span class="settings-item-label">AI 模型</span>
+                        <span id="ai-model-value" class="settings-item-value">Google Gemini <i class="fas fa-chevron-right"></i></span>
+                    </div>
+                    <div id="ai-model-popup" class="settings-popup w-full">
+                         <label for="model-google" class="popup-option"><input type="radio" id="model-google" name="ai-model" value="google">Google Gemini</label>
+                         <label for="model-openrouter" class="popup-option"><input type="radio" id="model-openrouter" name="ai-model" value="openrouter">DeepSeek (Free)</label>
+                    </div>
+                </div>
+                <div id="api-key-sections">
+                    <div class="text-center mt-2 p-3 bg-[var(--bg-color)] rounded-lg text-sm text-[var(--secondary-text)]">
+                        ✨ 默认使用内置 Gemini 模型，管理员可为账户分配专属密钥 ✨
+                    </div>
+                    <div id="openrouter-key-section" class="hidden"><label class="text-sm font-medium text-[var(--secondary-text)]" for="openrouter-api-key">OpenRouter API 密钥</label><input type="password" id="openrouter-api-key" class="settings-input" placeholder="请粘贴您的 OpenRouter 密钥"></div>
+                </div>
+            </div>
+            <div class="absolute top-4 right-4"><button id="close-settings-btn" class="icon-btn" title="关闭"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm3.707 6.293a1 1 0 00-1.414-1.414L12 10.586 9.707 8.293a1 1 0 00-1.414 1.414L10.586 12l-2.293 2.293a1 1 0 101.414 1.414L12 13.414l2.293 2.293a1 1 0 001.414-1.414L13.414 12l2.293-2.293z"/></svg></button></div>
+        </div>
+    </div>
+
+    <!-- 上下文容器 -->
+    <div id="context-container" class="hidden">
+        <script type="text/plain" id="userContextJs">/* 这是一个JS函数，请基于它修改 */</script>
+        <script type="text/plain" id="userContextJsPlus">/* As a senior developer, refactor or enhance this professional JavaScript function. Focus on performance, readability, and modern best practices. */</script>
+        <script type="text/plain" id="userContextJsonUi">/* 这是UI定义，请参考生成新的UI */</script>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="prompts.js"></script>
+    <script src="backend.js"></script> 
+    <script src="app.js"></script>
+</body>
+</html>
+
